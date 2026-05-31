@@ -1,0 +1,625 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define NUMBER_OF_JUNCTION 20
+#define NUMBER_OF_SINDOUSI_TATE 50
+#define NUMBER_OF_SINDOUSI_YOKO 50
+#define NUMBER_OF_SINDOUSI_TATE4 25
+#define NUMBER_OF_SINDOUSI_YOKO4 25
+#define START_OF_TRIGER 2500
+#define END_OF_TRIGER 2550
+#define START_OF_TRIGER4 2550
+#define END_OF_TRIGER4 2570
+#define NUM_PULSE 1
+
+int main(){
+    double Cj = NUMBER_OF_JUNCTION*10.0; //[aF]
+    double C = 2.0;//[aF] 斜め方向のキャパシタ
+    double Cx = 2.5;//[aF] 縦横方向のキャパシタ
+    double Cs = 2.0;//[aF]
+    double R = 10.0; //[G]
+    double Rj = 0.001;//[G]
+    double Vd8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0}; //[V]
+    double Vd4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; //[V]
+    double Vd1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; //[V]
+    double Vd2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; //[V]
+    double Vin = 0.01;//[V]
+    double Vn8[NUMBER_OF_SINDOUSI_TATE+2][NUMBER_OF_SINDOUSI_YOKO+2] = {0.0};  //[V]
+    double Vn4[NUMBER_OF_SINDOUSI_TATE4+2][NUMBER_OF_SINDOUSI_YOKO4+2] = {0.0};  //[V]
+    double Vn1[NUMBER_OF_SINDOUSI_TATE+2][NUMBER_OF_SINDOUSI_YOKO+2] = {0.0};  //[V]
+    double Vn2[NUMBER_OF_SINDOUSI_TATE4+2][NUMBER_OF_SINDOUSI_YOKO4+2] = {0.0};  //[V]
+    double Q8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0}; 
+    double Q4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; 
+    double Q1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; 
+    double Q2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; 
+    double t = 0.0; //[ns]
+    double dt = 0.1, dq;
+    double e = 0.1602,r;
+    int L8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0};
+    int L4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0};
+    int L1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0};
+    int L2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0};
+    double q_sum8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double q_sum4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double q_sum1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double q_sum2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEup8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double dEdown8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double dEup4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEdown4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEup1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEdown1[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEup2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double dEdown2[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    int up = 0;
+    int down = 0;
+    double wt = 0;
+    int i, j = 0;
+    double wt_min = 1000.0;
+    int A, B = 0;
+    int a, b = 0;
+    int pulse1[NUM_PULSE][2] = {{0,6}};
+    int pulse2[NUM_PULSE][2] = {{6,0}};
+    int x, y = 0;
+    int m = 0;
+    int w = 0;
+    int printkaisu = 0;
+    //8結合層の周囲の振動子
+    double Vl8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Vr8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Vu8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Vb8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Va8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Vc8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Ve8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double Vf8[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0};
+    double V18[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0}; //中間振動子１と接続
+    double V28[NUMBER_OF_SINDOUSI_TATE+1][NUMBER_OF_SINDOUSI_YOKO+1] = {0.0}; //中間振動子２と接続
+    //4結合層の周囲の振動子
+    double Vl4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double Vr4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double Vu4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double Vb4[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double V14[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; //中間振動子１と接続
+    double V24[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0}; //中間振動子２と接続
+    //中間振動子の周囲振動子
+    double V81[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double V41[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double V82[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+    double V42[NUMBER_OF_SINDOUSI_TATE4+1][NUMBER_OF_SINDOUSI_YOKO4+1] = {0.0};
+
+    double setting[NUMBER_OF_SINDOUSI_TATE][NUMBER_OF_SINDOUSI_YOKO] = { 0 };
+
+
+    srand((unsigned)time(NULL));
+
+    for (b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++) {
+        for (a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++) {
+            if (setting[b][a] == 1){
+                Vd8[b][a] = 0;
+            } else {
+                if (b % 2 == 0){
+                    if ((a + b) % 2 == 0) {
+                        Vd8[b][a] = 0.00760; //閾値0.007735[V]
+                    } else {
+                        Vd8[b][a] = -0.00760;
+                    }
+                }
+                else{
+                    if ((a + b) % 2 == 0) {
+                        Vd8[b][a] = -0.00760;
+                    } else {
+                        Vd8[b][a] = 0.00760;
+                    }
+                }
+                
+            }
+        }
+    }
+   Vd8[2][2] = 0;
+   Vd8[9][3] = 0;
+   Vd8[3][9] = 0;
+
+    for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+        for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+            if((a+b)%2 == 0){
+                Vd4[b][a] = -0.00753; //0.007792[V]
+                Vd1[b][a] = -0.00765; //0.007896[V]
+                Vd2[b][a] = -0.00765; //0.007896[V]
+            }else{
+                Vd4[b][a] = 0.00755;
+                Vd1[b][a] = 0.00765;
+                Vd2[b][a] = 0.00765;
+            }
+        }
+    }
+
+	while(t <= START_OF_TRIGER + 500){
+
+        if(t > START_OF_TRIGER && t < END_OF_TRIGER){
+            Vn8[8][0] = -Vin;
+            Vn8[0][8] = -Vin;
+        }else{
+            Vn8[8][0] = 0;
+            Vn8[0][8] = 0;
+        }
+
+        if(t > START_OF_TRIGER && t < END_OF_TRIGER){
+            Vn8[10][0] = Vin;
+            Vn8[9][1] = Vin;
+            Vn8[0][10] = Vin;
+            Vn8[1][9] = Vin;
+        }else{
+            Vn8[10][0] = 0;
+            Vn8[9][1] = 0;
+            Vn8[0][10] = 0;
+            Vn8[1][9] = 0;
+        }
+
+        if(t > START_OF_TRIGER4 && t < END_OF_TRIGER4){
+            Vn4[1][0] = -Vin;
+            Vn4[0][0] = 0;
+        }else{
+            Vn4[1][0] = 0;
+            Vn4[0][0] = 0;
+        }
+
+
+        // if(t > START_OF_TRIGER && t < END_OF_TRIGER){
+        //     for(m = 0; m < NUM_PULSE; m++){
+        //         if((pulse1[m][0]+pulse1[m][1])%2 == 1){
+        //             Vn[pulse1[m][0]][pulse1[m][1]] = Vin;
+        //         }else{
+        //             Vn[pulse1[m][0]][pulse1[m][1]] = Vin;
+        //         }
+        //     }
+        // }else{
+        //     for(m = 0; m < NUM_PULSE; m++){
+        //         if((pulse1[m][0]+pulse1[m][1])%2 == 1){
+        //             Vn[pulse1[m][0]][pulse1[m][1]] = 0;
+        //         }else{
+        //             Vn[pulse1[m][0]][pulse1[m][1]] = 0;
+        //         }
+        //     }
+        // }
+
+        // if(t > START_OF_TRIGER && t < END_OF_TRIGER){
+        //     for(m = 0; m < NUM_PULSE; m++){
+        //         if((pulse2[m][0]+pulse2[m][1])%2 == 1){
+        //             Vn[pulse2[m][0]][pulse2[m][1]] = Vin;
+        //         }else{
+        //             Vn[pulse2[m][0]][pulse2[m][1]] = Vin;
+        //         }
+        //     }
+        // }else{
+        //     for(m = 0; m < NUM_PULSE; m++){
+        //         if((pulse2[m][0]+pulse2[m][1])%2 == 1){
+        //             Vn[pulse2[m][0]][pulse2[m][1]] = 0;
+        //         }else{
+        //             Vn[pulse2[m][0]][pulse2[m][1]] = 0;
+        //         }
+        //     }
+        // }
+
+        //周囲の振動子と接続
+        for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+            for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                Vl8[b][a] = Vn8[b][a-2];
+                Vr8[b][a] = Vn8[b][a+2];
+                Vu8[b][a] = Vn8[b+2][a];
+                Vb8[b][a] = Vn8[b-2][a];
+                Va8[b][a] = Vn8[b-1][a-1];
+                Vc8[b][a] = Vn8[b-1][a+1];
+                Ve8[b][a] = Vn8[b+1][a-1];
+                Vf8[b][a] = Vn8[b+1][a+1];
+                if(b % 2 == 0 && a % 2 == 0){
+                    V18[b][a] = Vn1[b/2][a/2];
+                    V28[b][a] = Vn2[b/2][a/2];
+                }else{
+                    V18[b][a] = 0;
+                    V28[b][a] = 0;
+                }
+            }
+        }
+        
+        for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+            for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                Vl4[b][a] = Vn4[b][a-1];
+                Vr4[b][a] = Vn4[b][a+1];
+                Vu4[b][a] = Vn4[b+1][a];
+                Vb4[b][a] = Vn4[b-1][a];
+                V14[b][a] = Vn1[b][a];
+                V24[b][a] = Vn2[b][a];
+                V81[b][a] = Vn8[2*b][2*a];
+                V41[b][a] = Vn4[b][a];
+                V82[b][a] = Vn8[2*b][2*a];
+                V42[b][a] = Vn4[b][a];
+            }
+        }
+                
+        //Vnの計算
+        for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+            for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                if(b % 2 == 0 && a % 2 == 0){
+                    q_sum8[b][a] = (-NUMBER_OF_JUNCTION*(-Cj*Q8[b][a]-Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])-C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a])-Cs*Cj*(V18[b][a]+V28[b][a]))-Cj*L8[b][a]*e)/(NUMBER_OF_JUNCTION*(4*C+4*Cx+2*Cs)+Cj);
+                }else{
+                    q_sum8[b][a] = (-NUMBER_OF_JUNCTION*(-Cj*Q8[b][a]-Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])-C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a]))-Cj*L8[b][a]*e)/(NUMBER_OF_JUNCTION*(4*C+4*Cx)+Cj);
+                }
+            }
+        }
+
+        for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+            for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                q_sum4[b][a] = (-NUMBER_OF_JUNCTION*(-Cj*Q4[b][a]-C*Cj*(Vl4[b][a]+Vr4[b][a]+Vu4[b][a]+Vb4[b][a])-Cs*Cj*(V14[b][a]+V24[b][a]))-Cj*L4[b][a]*e)/(NUMBER_OF_JUNCTION*(4*C+2*Cs)+Cj);
+                q_sum1[b][a] = (-NUMBER_OF_JUNCTION*(-Cj*Q1[b][a]-Cs*Cj*(V41[b][a]+V81[b][a]))-Cj*L1[b][a]*e)/(2*NUMBER_OF_JUNCTION*Cs+Cj);
+                q_sum2[b][a] = (-NUMBER_OF_JUNCTION*(-Cj*Q2[b][a]-Cs*Cj*(V42[b][a]+V82[b][a]))-Cj*L2[b][a]*e)/(2*NUMBER_OF_JUNCTION*Cs+Cj);
+            }
+        }
+        
+        for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+            for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                Vn8[b][a] = q_sum8[b][a]/Cj;
+            }
+        }
+
+        for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+            for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                Vn4[b][a] = q_sum4[b][a]/Cj;
+                Vn1[b][a] = q_sum1[b][a]/Cj;
+                Vn2[b][a] = q_sum2[b][a]/Cj;
+            }
+        }
+
+        
+
+        //Vnの出力
+        printf("%f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",t, Vn8[10][2], Vn8[11][3], Vn8[12][4], Vn8[13][5], Vn8[14][6], Vn1[6][2], Vn2[6][2], Vn1[7][3], Vn2[7][3], Vn2[2][6], Vn8[2][2], Vn8[0][0]);
+        
+        //dEの計算
+        for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+            for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                if(b % 2 == 0 && a % 2 == 0){
+                    dEup8[b][a] = e*((-(NUMBER_OF_JUNCTION-1)+2*L8[b][a])*(4*C+4*Cx+2*Cs)*e+Cj*(2*Q8[b][a]-e)+2*Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])+2*C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a])+2*Cs*Cj*(V18[b][a]+V28[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+4*Cx+2*Cs)+Cj));
+                    dEdown8[b][a] = -e*(-(-(NUMBER_OF_JUNCTION-1)-2*L8[b][a])*(4*C+4*Cx+2*Cs)*e+Cj*(2*Q8[b][a]+e)+2*Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])+2*C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a])+2*Cs*Cj*(V18[b][a]+V28[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+4*Cx+2*Cs)+Cj));
+                }else{
+                    dEup8[b][a] = e*((-(NUMBER_OF_JUNCTION-1)+2*L8[b][a])*(4*C+4*Cx)*e+Cj*(2*Q8[b][a]-e)+2*Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])+2*C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+4*Cx)+Cj));
+                    dEdown8[b][a] = -e*(-(-(NUMBER_OF_JUNCTION-1)-2*L8[b][a])*(4*C+4*Cx)*e+Cj*(2*Q8[b][a]+e)+2*Cx*Cj*(Vl8[b][a]+Vr8[b][a]+Vu8[b][a]+Vb8[b][a])+2*C*Cj*(Va8[b][a]+Vc8[b][a]+Ve8[b][a]+Vf8[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+4*Cx)+Cj));
+                }
+
+                if(dEup8[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION-L8[b][a]; j++){
+                        r = (double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEup8[b][a])*log(1/r);
+                        
+                        if(wt < dt && wt < wt_min){
+                            up = 1;
+                            down = 0;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 8;
+                        }
+                    }
+                }
+                if(dEdown8[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION+L8[b][a]; j++){
+                        r=(double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEdown8[b][a])*log(1/r);
+
+                        if(wt < dt && wt < wt_min){
+                            up = 0;
+                            down = 1;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 8;
+                        }
+                    }
+                }
+            }
+        }
+
+        for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+            for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                dEup4[b][a] = e*((-(NUMBER_OF_JUNCTION-1)+2*L4[b][a])*(4*C+2*Cs)*e+Cj*(2*Q4[b][a]-e)+2*C*Cj*(Vl4[b][a]+Vr4[b][a]+Vu4[b][a]+Vb4[b][a])+2*Cs*Cj*(V14[b][a]+V24[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+2*Cs)+Cj));
+                dEdown4[b][a] = -e*(-(-(NUMBER_OF_JUNCTION-1)-2*L4[b][a])*(4*C+2*Cs)*e+Cj*(2*Q4[b][a]+e)+2*C*Cj*(Vl4[b][a]+Vr4[b][a]+Vu4[b][a]+Vb4[b][a])+2*Cs*Cj*(V14[b][a]+V24[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(4*C+2*Cs)+Cj));
+
+                dEup1[b][a] = e*((-(NUMBER_OF_JUNCTION-1)+2*L1[b][a])*(2*Cs)*e+Cj*(2*Q1[b][a]-e)+2*Cs*Cj*(V41[b][a]+V81[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(2*Cs)+Cj));
+                dEdown1[b][a] = -e*(-(-(NUMBER_OF_JUNCTION-1)-2*L1[b][a])*(2*Cs)*e+Cj*(2*Q1[b][a]+e)+2*Cs*Cj*(V41[b][a]+V81[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(2*Cs)+Cj));
+
+                dEup2[b][a] = e*((-(NUMBER_OF_JUNCTION-1)+2*L2[b][a])*(2*Cs)*e+Cj*(2*Q2[b][a]-e)+2*Cs*Cj*(V42[b][a]+V82[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(2*Cs)+Cj));
+                dEdown2[b][a] = -e*(-(-(NUMBER_OF_JUNCTION-1)-2*L2[b][a])*(2*Cs)*e+Cj*(2*Q2[b][a]+e)+2*Cs*Cj*(V42[b][a]+V82[b][a]))/(2*Cj*(NUMBER_OF_JUNCTION*(2*Cs)+Cj));
+
+                if(dEup4[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION-L4[b][a]; j++){
+                        r = (double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEup4[b][a])*log(1/r);
+                        
+                        if(wt < dt && wt < wt_min){
+                            up = 1;
+                            down = 0;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 4;
+                        }
+                    }
+                }
+                if(dEdown4[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION+L4[b][a]; j++){
+                        r=(double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEdown4[b][a])*log(1/r);
+
+                        if(wt < dt && wt < wt_min){
+                            up = 0;
+                            down = 1;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 4;
+                        }
+                    }
+                }
+                if(dEup1[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION-L1[b][a]; j++){
+                        r = (double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEup1[b][a])*log(1/r);
+                        
+                        if(wt < dt && wt < wt_min){
+                            up = 1;
+                            down = 0;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 1;
+                        }
+                    }
+                }
+                if(dEdown1[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION+L1[b][a]; j++){
+                        r=(double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEdown1[b][a])*log(1/r);
+
+                        if(wt < dt && wt < wt_min){
+                            up = 0;
+                            down = 1;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 1;
+                        }
+                    }
+                }
+                if(dEup2[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION-L2[b][a]; j++){
+                        r = (double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEup2[b][a])*log(1/r);
+                        
+                        if(wt < dt && wt < wt_min){
+                            up = 1;
+                            down = 0;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 2;
+                        }
+                    }
+                }
+                if(dEdown2[b][a] > 0){
+                    for(j = 0; j < NUMBER_OF_JUNCTION+L2[b][a]; j++){
+                        r=(double)rand()/RAND_MAX;
+                        wt = (e*e*Rj/dEdown2[b][a])*log(1/r);
+
+                        if(wt < dt && wt < wt_min){
+                            up = 0;
+                            down = 1;
+                            wt_min = wt;
+                            A = a;
+                            B = b;
+                            w = 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        if(up == 1 && w == 8){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L8[B][A] += 1;
+
+            if(L8[B][A] == NUMBER_OF_JUNCTION){
+                L8[B][A] = 0;
+                Q8[B][A] -= e;
+            }
+            t += wt_min;
+            up = 0;
+
+        }else if(down == 1 && w == 8){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L8[B][A] -= 1;
+            if(L8[B][A] == -NUMBER_OF_JUNCTION){
+                L8[B][A] = 0;
+                Q8[B][A] += e;
+            }
+            t += wt_min;
+            down = 0;
+
+        }else if(up == 1 && w == 4){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L4[B][A] += 1;
+
+            if(L4[B][A] == NUMBER_OF_JUNCTION){
+                L4[B][A] = 0;
+                Q4[B][A] -= e;
+            }
+            t += wt_min;
+            up = 0;
+
+        }else if(down == 1 && w == 4){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L4[B][A] -= 1;
+            if(L4[B][A] == -NUMBER_OF_JUNCTION){
+                L4[B][A] = 0;
+                Q4[B][A] += e;
+            }
+            t += wt_min;
+            down = 0;
+
+        }else if(up == 1 && w == 1){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L1[B][A] += 1;
+
+            if(L1[B][A] == NUMBER_OF_JUNCTION){
+                L1[B][A] = 0;
+                Q1[B][A] -= e;
+            }
+            t += wt_min;
+            up = 0;
+
+        }else if(down == 1 && w == 1){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L1[B][A] -= 1;
+            if(L1[B][A] == -NUMBER_OF_JUNCTION){
+                L1[B][A] = 0;
+                Q1[B][A] += e;
+            }
+            t += wt_min;
+            down = 0;
+
+        }else if(up == 1 && w == 2){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L2[B][A] += 1;
+
+            if(L2[B][A] == NUMBER_OF_JUNCTION){
+                L2[B][A] = 0;
+                Q2[B][A] -= e;
+            }
+            t += wt_min;
+            up = 0;
+
+        }else if(down == 1 && w == 2){
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*wt_min/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*wt_min/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*wt_min/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*wt_min/R;
+                }
+            }
+            L2[B][A] -= 1;
+            if(L2[B][A] == -NUMBER_OF_JUNCTION){
+                L2[B][A] = 0;
+                Q2[B][A] += e;
+            }
+            t += wt_min;
+            down = 0;
+
+        }else{
+            for(b = 2; b < NUMBER_OF_SINDOUSI_TATE-1; b++){
+                for(a = 2; a < NUMBER_OF_SINDOUSI_YOKO-1; a++){
+                    Q8[b][a] += (Vd8[b][a]-Vn8[b][a])*dt/R;
+                }
+            }
+            for(b = 1; b < NUMBER_OF_SINDOUSI_TATE4-1; b++){
+                for(a = 1; a < NUMBER_OF_SINDOUSI_YOKO4-1; a++){
+                    Q4[b][a] += (Vd4[b][a]-Vn4[b][a])*dt/R;
+                    Q1[b][a] += (Vd1[b][a]-Vn1[b][a])*dt/R;
+                    Q2[b][a] += (Vd2[b][a]-Vn2[b][a])*dt/R;
+                }
+            }
+            t += dt;
+        }
+        
+        up = 0;
+        down = 0;
+        wt = 1000.0;
+        wt_min = 1000.0;
+        A = 0;
+        B = 0;
+        w = 0;
+	}
+	return 0;
+}
